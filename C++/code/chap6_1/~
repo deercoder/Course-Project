@@ -1,0 +1,30 @@
+#include <iostream>
+using namespace std;
+
+int main()
+{
+char* str1 = new char[4];
+str1 = "sfe";
+char str2[4] = "adf";
+cout<<"赋值前："<<endl;
+cout<<"str1指向："<<&str1<<endl;
+cout<<"str1内容："<<str1<<endl;
+cout<<"str2指向："<<&str2<<endl;
+cout<<"str2内容："<<str2<<endl;
+strcpy(str1,"iiiiii");
+cout<<"str2先赋值后："<<endl;
+cout<<"str1指向："<<&str1<<endl;
+cout<<"str1内容："<<str1<<endl;
+cout<<"str2指向："<<&str2<<endl;
+cout<<"str2内容："<<str2<<endl;
+
+strcpy(str2,"ooo");
+cout<<"str1后赋值后："<<endl;
+cout<<"str1指向："<<&str1<<endl;
+cout<<"str1内容："<<str1<<endl;
+cout<<"str2指向："<<&str2<<endl;
+cout<<"str2内容："<<str2<<endl;
+
+
+}
+

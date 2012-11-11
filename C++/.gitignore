@@ -1,0 +1,12 @@
+Debug/
+*.exe
+*.ncb
+*.plg
+*.sln
+*.suo
+*.vcproj
+*.user
+*.dsp
+*.dsw
+*.opt
+*.rar
