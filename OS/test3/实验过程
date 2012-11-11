@@ -1,0 +1,20 @@
+1.利用make命令实现模块程序（驱动程序）编译。
+2.insmod ./mytest.ko，插入模块
+3.cat /var/log/messages
+发现多出来一个register success!
+说明前面的这个插入是成功的，而且还是成功调用了init_module
+4.此时观察/proc/devices文件，发现在character中，多出来一个设备mytest,记下设备号。
+5.利用mknod /dev/mytest c 251 2
+使得模块和驱动对应，注意签名的251就是刚才读取的那个主设备号，2为自己设置的从设备号。
+6.利用cat /var/log/messages观察对应的信息。
+7.gcc mytest_test.c
+得到检测程序，然后，执行之，输出的信息是：
+The message is mytest!(直接从设备上读取的，我初始化字符设备是mytest!字符)
+Please input the string
+hello,world（输入）
+The message is hello,world
+8.完成后，rmmod ./mytest.ko删除模块。
+可以在/var/log/messages中找到相应的信息的！
+
+
+

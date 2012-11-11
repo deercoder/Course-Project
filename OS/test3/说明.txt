@@ -1,0 +1,94 @@
+Hello,world:
+
+1.编写hello.c文件如下：
+
+#include "/usr/src/linux-2.6.31.12/include/linux/kernel.h"
+#include "/usr/src/linux-2.6.31.12/include/config/modules.h"
+
+#if CONFIG_MODVERSIONS == 1
+#define MODVERSIONS
+#include "/usr/src/linux-2.6.31.12/include/linux/version.h"
+#endif
+
+int init_module()
+{
+  printk("Hello,world!\n");
+  printk("I am running in a kernel mod!\n");
+  return 0;
+}
+
+void cleanup_module()
+{
+  printk("I will shut down myself in kernel mod!\n");
+}
+
+2.编写Makefile如下：
+
+# If KERNELRELEASE is defined, we've been invoked from the
+# kernel build system and can use its language.
+ifeq ($(KERNELRELEASE),)
+
+    # Assume the source tree is where the running kernel was built
+    # You should set KERNELDIR in the environment if it's elsewhere
+    KERNELDIR ?= /lib/modules/$(shell uname -r)/build
+    # The current directory is passed to sub-makes as argument
+    PWD := $(shell pwd)
+
+modules:
+	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules
+
+modules_install:
+	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules_install
+
+clean:
+	rm -rf *.o *~ core .depend .*.cmd *.ko *.mod.c .tmp_versions
+
+.PHONY: modules modules_install clean
+
+else
+    # called from kernel build system: just declare what our modules are
+    obj-m := hello.o 
+endif
+
+
+3.在命令行下输入： insmod ./hello.ko(注：此文件即生成的文件)
+然后进入到/var/log/messages下面打开，看到最后显示的是：
+Mar  6 19:03:42 liuchang-laptop kernel: [ 8472.343068] Hello,world!
+Mar  6 19:03:42 liuchang-laptop kernel: [ 8472.343074] I am running in a kernel mod!
+同时，使用命令查看mod: lsmod，会发现此时模块就又hello
+如下：
+root@liuchang-laptop:/home/liuchang/桌面/test3# lsmod
+Module                  Size  Used by
+hello                   1052  0 
+nls_iso8859_1           3740  0 
+nls_cp437               5372  0 
+vfat                   10716  0 
+fat                    51452  1 vfat
+usb_storage            52544  0 
+
+
+4.在命令行下输入： rmmod ./hello.ko
+删除该模块，发现/var/log/messages文件中的内容最后是：
+Mar  6 19:09:02 liuchang-laptop kernel: [ 8791.665905] I will shut down myself in kernel mod!
+此时再观察模块，内容为：lsmod
+nls_iso8859_1           3740  0 
+nls_cp437               5372  0 
+vfat                   10716  0 
+fat                    51452  1 vfat
+usb_storage            52544  0 
+binfmt_misc             8356  1 
+ppdev                   6688  0 
+snd_hda_codec_nvhdmi     4828  1 
+不再含有hello说明该模块被删除了。
+
+
+================================================================================================
+gcc中出现了“void value not ignored as it ought to be”错误，
+
+原因是你使用的一个函数的返回值类型是void，而你有对它进行了赋值处理。
+
+例如：
+
+int ret;
+
+ret=unregister_chrdev(MAJOR_NUM,"globalvar");

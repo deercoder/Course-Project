@@ -1,0 +1,18 @@
+1.为何：
+#include <gtk/gtk.h>
+GtkWidget *window;
+int main(int argc ,char ** argv)
+{
+  gtk_init(&argc, &argv);
+
+  window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+  gtk_window_set_title (GTK_WINDOW (window), "Linux System Moniter");//标题
+  gtk_window_set_default_size (GTK_WINDOW (window), 400, 300);//默认窗口尺寸大小
+//  gtk_window_set_resizable (GTK_WINDOW (window), FALSE);//窗口不可改变
+  gtk_window_set_position(GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+  g_signal_connect(G_OBJECT(window), "destroy", G_CALLBACK(gtk_main_quit), NULL);  //将窗口关闭信息与destroy_window关联
+  gtk_widget_show_all (window);	//显示所有的窗口和界面
+  gtk_main(); 
+  return 0;
+}
+为何被注释掉的一部分，：：：如果有这一句，那么初始化的窗口很小，而如果没有，则可以正常的显示大小呢？就是这个是否可以resizable的地方就可以说明吗？

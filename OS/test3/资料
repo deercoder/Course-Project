@@ -1,0 +1,222 @@
+Linux系统采用一组固定的入口点来实现驱动设备的功能。
+open入口点: 打开设备准备I/O操作。open子程序必须对将要进行的I/O操作做好必要的准备工作，如清除缓冲区等。
+close入口点: 关闭一个设备。当最后一次使用设备终结后，调用close子程序。
+read入口点: 从设备上读数据。 
+write入口点: 往设备上写数据。 
+ioctl入口点: 执行读、写之外的操作。
+select入口点: 检查设备，看数据是否可读或设备是否可用于写数据。
+      如果设备驱动程序没有提供上述入口点中的某一个，系统会用缺省的子程序来代替。对于不同的系统，也还有一些其它的入口点。
+=============================================================================================
+
+在系统内部，I/O设备的存/取通过一组固定的入口点来进行，这组入口点是由每个设备的驱动程序提供的。具体到Linux系统，设备驱动程序所提供的这组入口点由一个文件操作结构来向系统进行说明。file_operation结构定义于linux/fs.h文件中。
+
+struct file_operation{
+int (*lseek)(struct inode *inode, struct file *filp, off_t off, int pos);
+int (*read)(struct inode *inode, struct file *filp, char *buf, int count);
+int (*write)(struct inode *inode, struct file *filp, const char *buf, int count);
+int (*readdir)(struct inode *inode, struct file *filp, struct dirent *dirent, int count);
+int (*select)(struct inode *inode, struct file *filp, int sel_type, select_table *wait);
+int (*ioctl)(struct inode *inode, struct file *filp, unsigned int cmd, unsigned int arg);
+int (*mmap)(void);
+int (*open)(struct inode *inode, struct file *filp);
+int (*release)(struct inode *inode, struct file *filp);
+int (*fasync)(struct inode *inode, struct file *filp);
+};
+
+file_operation结构中的成员几乎全部是函数指针，所以实质上就是函数跳转表。每个进程对设备的操作都会根据major、minor设备号，转换成对file_operation结构的访问。
+常用的操作包括以下几种：
+●lseek, 移动文件指针的位置，只能用于可以随机存取的设备。
+●read, 进行读操作，参数buf为存放读取结果的缓冲区，count为所要读取的数据长度。返回值为负表示读取操作发生错误；否则，返回实际读取的字节数。对于字符型，要求读取的字节数和返回的实际读取字节数都必须是inode-i_blksize的倍数。
+●write, 进行写操作，与read类似
+●readdir, 取得下一个目录入口点，只有与文件系统相关的设备程序才使用。
+●select, 进行选择操作。如果驱动程序没有提供select入口，select操作会认为设备已经准备好进行任何I/O操作。
+●ioctl, 进行读、写以外的其他操作，参数cmd为自定义的命令
+●mmap, 用于把设备的内容映射到地址空间，一般只有块设备驱动程序使用
+●open, 打开设备准备进行I/O操作。返回0表示打开成功，返回负数表示失败。如果驱动程序没有提供open入口，则只要/dev/driver文件存在就认为打开成功。
+●release, 即close操作。
+在用户自己的驱动程序中，首先要根据驱动程序的功能，完成file_operation结构中函数实现。不需要的函数接口可以直接在 file_operation结构中初始化为NULL。file_operation变量会在驱动程序初始化时注册到系统内部。当操作系统对设备操作时，会调用驱动程序注册的file_operation结构中的函数指针。
+=============================================================================================
+下面是最近写的一篇文章，希望能够对大家有帮助，呵呵！
+
+linux-2.6内核模块引用计数的实现
+
+作者：刘洪涛，华清远见嵌入式学院金牌讲师。
+
+一、模块使用计数的背景知识
+
+模块是一种可以在内核运行过程中动态加载、卸载的内核功能组件。2.6内核中模块的命名方式为*.ko。模块在被使用时，是不允许被卸载的。编程时需要用“使用计数”来描述模块是否在被使用。
+
+二、2.4内核使用计数的实现方法
+
+2.4内核中，模块自身通过 MOD_INC_USE_COUNT, MOD_DEC_USE_COUNT宏来管理自己被使用的计数。通常我们在写模块时，会在open方法中加入MOD_INC_USE_COUNT，在 close方法中加入MOD_DEC_USE_COUNT来实现使用计数。
+
+三、2.6内核使用计数的实现方法
+
+2.6内核提供了更健壮、灵活的模块计数管理接口 try_module_get(&module), module_put(&module)取代2.4中的模块使用计数管理宏。模块的使用计数不必由自身管理，而且在管理模块使用计数时考虑到 SMP与PREEMPT机制的影响（参考module.h中try_module_get和module.c中module_put的实现）。
+
+int try_module_get(struct module *module); 用于增加模块使用计数；若返回为0，表示调用失败，希望使用的模块没有被加载或正在被卸载中。
+
+void module_put(struct module *module); 减少模块使用计数。
+
+try_module_get与module_put 的引入与使用与2.6内核下的设备模型密切相关。2.6内核为不同类型的设备定义了struct module *owner 域，用来指向管理此设备的模块。如字符设备的定义：
+
+struct cdev
+    {
+        struct kobject kobj;
+        struct module *owner;
+        struct file_operations *ops;
+        struct list_head list;
+        dev_t dev;
+        unsigned int count;
+    };
+    struct file_operations {
+        struct module *owner;
+        loff_t (*llseek) (struct file *, loff_t, int);
+        ssize_t (*read) (struct file *, char __user *, size_t, loff_t *);
+        ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);
+        ……
+    };
+
+从设备使用的角度出发，当需要打开、开始使用某个设备时，使用 try_module_get(dev->owner)去增加管理此设备的 owner模块的使用计数；当关闭、不再使用此设备时，使用module_put(dev->owner)减少对管理此设备的owner模块的使用计数。这样，当设备在使用时，管理此设备的模块就不能被卸载；只有设备不再使用时模块才能被卸载。
+
+2.6内核下，对于为具体设备写驱动的开发人员而言，基本无需使用 try_module_get与module_put，因为此时开发人员所写的驱动通常为支持某具体设备的owner模块，对此设备owner模块的计数管理由内核里更底层的代码如总线驱动或是此类设备共用的核心模块来实现，从而简化了设备驱动开发。
+
+四、举例说明2.6内核模块使用计数的实现过程
+
+举一个2.6内核下字符设备驱动编写的例子来说明问题。在2.6内核下编写一个设备驱动时，初始化过程中大家都会看到如下的模板：
+
+static struct file_operations simple_remap_ops = {
+    .owner = THIS_MODULE,
+    .open = simple_open,
+    ……
+    };
+    static void simple_setup_cdev(struct cdev *dev, int minor,
+    struct file_operations *fops)
+    {
+        int err, devno = MKDEV(simple_major, minor);
+        cdev_init(dev, fops);
+        dev->owner = THIS_MODULE;
+        err = cdev_add (dev, devno, 1);
+        /* Fail gracefully if need be */
+        if (err)
+        printk (KERN_NOTICE "Error %d adding simple%d", err, minor);
+    }
+
+无论是cdev还是file_operations都将自己的struct module *owner成员指向了THIS_MODULE。那么这个THIS_MODULE 是什么呢？
+
+内核源码目录下include/linux/module.h
+
+#ifdef MODULE
+    #define MODULE_GENERIC_TABLE(gtype,name) \
+    extern const struct gtype##_id __mod_##gtype##_table \
+       __attribute__ ((unused, alias(__stringify(name))))
+
+extern struct module __this_module;
+    #define THIS_MODULE (&__this_module)
+    #else /* !MODULE */
+    #define MODULE_GENERIC_TABLE(gtype,name)
+    #define THIS_MODULE ((struct module *)0)
+    #endif
+
+__this_module这个符号是在加载到内核后才产生的。insmod命令执行后，会调用 kernel/module.c里的一个系统调用 sys_init_module，它会调用load_module函数，将用户空间传入的整个内核模块文件创建成一个内核模块，并返回一个struct module结构体，从此，内核中便以这个结构体代表这个内核模块。THIS_MODULE类似进程的CURRENT。
+
+struct module
+    {……
+        struct module_ref ref[NR_CPUS];
+    }
+
+struct module_ref
+    {
+        local_t count;//记录模块使用计数
+    } ____cacheline_aligned;
+
+现在咱们就看看内核是如何帮助我们完成使用计数的。
+
+在2.4内核中，我们是通过在open方法中增加引用计数，在close方法中减少引用计数。在2.6内核中，内核肯定也是要在open、close时帮助我们实现同样功能的。
+
+打开字符设备的大体流程如下：
+
+sys_open()->do_sys_open()->do_filp_open()->nameidata_to_filp() ->__dentry_open()->chrdev_open()->open()
+
+2.6内核中并不要求模块在open中显示的实现使用计数，真正使用模块使用计数是在chrdev_open()中完成的。
+
+内核源码fs/char_dev.c
+
+static int chrdev_open(struct inode *inode, struct file *filp)
+    {
+       struct cdev *p;
+    ……
+       cdev_get(p)； //增加cdev中owner指向的module的使用计数
+    ……
+        filp->f_op = fops_get(p->ops);}// 增加file_operations中owner指向的module的使用计数
+        if (filp->f_op->open) {
+             lock_kernel();
+             ret = filp->f_op->open(inode,filp);//调用到设备驱动中的open
+             unlock_kernel();
+         }
+     }
+
+static struct kobject *cdev_get(struct cdev *p)
+    {
+          struct module *owner = p->owner;
+     ……
+          if (owner && !try_module_get(owner))
+          return NULL;
+    ……
+    }
+
+内核源码Include/linux/fs.h
+
+#define fops_get(fops) \
+          (((fops) && try_module_get((fops)->owner) ? (fops) : NULL))
+
+关闭设备的大体流程
+
+sys_close()->filp_close()->fput()->__fput()->release()
+
+2.6内核中并不要求模块在release中显示的实现使用计数，真正使用模块使用计数是在__fput()中完成的。
+
+void __fput(struct file *file)
+    {
+          struct dentry *dentry = file->f_path.dentry;
+          struct vfsmount *mnt = file->f_path.mnt;
+          struct inode *inode = dentry->d_inode;
+
+      if (file->f_op && file->f_op->release)
+                file->f_op->release(inode, file);//调用到设备驱动中的release
+          ……
+                cdev_put(inode->i_cdev); //减少cdev中owner指向的module的使用计数
+          ……
+                fops_put(file->f_op);// 减少file_operations中owner指向的module的使用计数
+          ……
+     }
+返回顶部
+
+如果您喜欢这篇文章，可以加华清远见老师为好友，单击以下链接即可：
+ 
+http://student.csdn.net/invite.php?u=45153&c=8af704eb3cd8e773
+
+==============================================================================
+
+模块在被使用时，是不允许被卸载的。
+   2.4内核中，模块自身通过 MOD_INC_USE_COUNT, MOD_DEC_USE_COUNT宏来管理自己被使用的计数。
+   2.6内核提供了更健壮、灵活的模块计数管理接口 try_module_get(&module), module_put(&module)取代2.4中的模块使用计数管理宏；模块的使用计数不必由自身管理，而且在管理模块使用计数时考虑到 SMP与PREEMPT机制的影响。
+
+   int try_module_get(struct module *module); 用于增加模块使用计数；若返回为0，表示调用失败，希望使用的模块没有被加载或正在被卸载中。
+   void module_put(struct module *module); 减少模块使用计数。
+
+   try_module_get与module_put 的引入与使用与2.6内核下的设备模型密切相关。模块是用来管理硬件设备的，2.6内核为不同类型的设备定义了struct module *owner 域，用来指向管理此设备的模块。如字符设备的定义：
+
+struct cdev
+{
+    struct kobject kobj;
+    struct module *owner;
+    struct file_operations *ops;
+    struct list_head list;
+    dev_t dev;
+    unsigned int count;
+};
+
+    从设备使用的角度出发，当需要打开、开始使用某个设备时，使用 try_module_get(dev->owner)去增加管理此设备的 owner模块的使用计数；当关闭、不再使用此设备时，使用module_put(dev->owner)减少对管理此设备的owner模块的使用计数。这样，当设备在使用时，管理此设备的模块就不能被卸载；只有设备不再使用时模块才能被卸载。
+
+   2.6内核下，对于为具体设备写驱动的开发人员而言，基本无需使用 try_module_get与module_put，因为此时开发人员所写的驱动通常为支持某具体设备的owner模块，对此设备owner模块的计数管理由内核里更底层的代码如总线驱动或是此类设备共用的核心模块来实现，从而简化了设备驱动开发。

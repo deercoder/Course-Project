@@ -1,0 +1,253 @@
+修改的文件有：
+1。/usr/src/linux-2.6.31.12/kernel/sys.c
+添加：
+ asmlinkage int sys_mycall(char * infile, char *outfile){
+	int infd, outfd, count;
+	char buf[256];
+	mm_segment_t fs;
+	fs = get_fs();
+	set_fs(get_ds());
+	if((infd = sys_open(infile,O_RDONLY,0)) == -1)
+		return -2;
+	if((outfd = sys_open(outfile,O_WRONLY|O_CREAT, S_IRUSR|S_IWUSR)) == -1)
+		return -3;
+	while((count = sys_read(infd,buf,256))>0)
+		if(sys_write(outfd,buf,count)!= count)
+			return -5;
+		if(count == -1)
+			return -4;
+	sys_close(infd);
+	sys_close(outfd);
+	set_fs(fs);
+	return 0;
+}
+2。/usr/src/linux-2.6.31.12/arch/x86/include/unistd_32.h		 
+添加＃define _NR_name nnn  
+#define __NR_mycall 377 
+貌似修改asm-x86和asm文件夹下面的都一样，最终都会修改到上面的unistd_32.h文件。
+还有，也不存在修改总数的操作，直接添加一个你的那个号就可以了。
+3。/usr/src/linux/arch/x86/kernel/syscall_table_32.S
+添加 .long sys_mycall
+应该是：.long SYSMBOL_NAME(sys_mysyscall)吧？
+特别注意，前后的名称要一致。
+4。make menuconfig
+具体的参数不需要改变，只需要保存下，生成一个config文件就可以了，便于后面的bzImage的创建。
+如何提示缺少Install ncurses (ncurses-devel) and try again.
+这里提示说需要安装ncurses库文件。sudo apt-get install ncurses-dev 之后再make menuconfig试试！ 
+
+如果要用make xconfig，则要先安装libqt3-compat-headers：执行 sudo apt-get install libqt3-compat-headers。 
+
+5.make -j5
+  make bzImage
+  make modules
+  make modules_install
+  mkinitramfs -o /boot/initrd.img-mycall
+  make install
+修改：/boot/grub/grub.cfg
+ 增加如下部分：
+menuentry "Ubuntu, Linux 2.6.31-12-mysys" {
+        recordfail=1
+        if [ -n ${have_grubenv} ]; then save_env recordfail; fi
+	set quiet=1
+	insmod ext2
+	set root=(hd0,9)
+	search --no-floppy --fs-uuid --set 8fc33daf-4470-4482-b265-6109f82d9dd2
+	linux	/boot/vmlinuz-2.6.31.12 root=UUID=8fc33daf-4470-4482-b265-6109f82d9dd2 ro   quiet splash
+	initrd	/boot/initrd.img-mycall
+}
+
+主要就是修改这这俩部分：
+	linux	/boot/vmlinuz-2.6.31.12 root=UUID=8fc33daf-4470-4482-b265-6109f82d9dd2 ro   quiet splash
+	initrd	/boot/initrd.img-mycall
+为相应到参数就可以了。。
+
+重启，进入相应到菜单后就可以了。
+始终选择在root用户下面作，即使进入修改后到内核也是。
+
+貌似修改一次sys.c后，不要make clean，也是可以在make -j5
+这样的话，再次编译就少俩些步骤。快！！
+
+成功！！！！！！！！！！！！！！！！！！！！
+==============================================下删除===================
+5.拷贝/usr/src/linux-2.6.27.45/arch/x86/boot/bzImage到/boot/bzImage
+6。下面的已经实现了改变grub选项了，不需要手动修改grub了。
+make clean  
+make mrproper  //清除旧的配置文件
+make xconfig（可视化选项）
+make
+make modules_install
+make install 
+还可以的是：
+Make clean
+Make bzImage
+Make modules
+Make modules_install
+Make install
+
+
+printk是：/var/log/messages.log
+
+
+在debian下
+aptitude install rar
+rar -e *.rar
+
+
+
+=========================ubuntu的grub修改内容==============
+menuentry "Ubuntu, Linux 2.6.31-12-mysys" {
+        recordfail=1
+        if [ -n ${have_grubenv} ]; then save_env recordfail; fi
+	set quiet=1
+	insmod ext2
+	set root=(hd0,9)
+	search --no-floppy --fs-uuid --set 8fc33daf-4470-4482-b265-6109f82d9dd2
+	linux	/boot/vmlinuz-2.6.31-12 root=UUID=8fc33daf-4470-4482-b265-6109f82d9dd2 ro   quiet splash
+	initrd	/boot/initrd.img-mysys
+}
+
+
+========================读写函数===========================
+ssize_t  read(int fd, void *buffer,size_t count); 
+ssize_t write(int fd, const void *buffer,size_t count); 
+
+fd是我们要进行读写操作的文件描述符,buffer是我们要写入文件内容或读出文件内容的内存地址.count是我们要读写的字节数. 
+
+对于普通的文件read从指定的文件(fd)中读取count字节到buffer缓冲区中(记住我们必须提供一个足够大的缓冲区),同时返回count. 
+
+如果read读到了文件的结尾或者被一个信号所中断,返回值会小于count.如果是由信号中断引起返回,而且没有返回数据,read会返回-1,且设置errno为EINTR.
+
+当程序读到了文件结尾的时候,read会返回0. 
+write从buffer中写count字节到文件fd中,成功时返回实际所写的字节数. 
+
+==============================================================================
+读函数read  
+ssize_t read(int fd,void *buf,size_t nbyte) 
+read函数是负责从fd中读取内容.成功时,read返回实际所读的字节数,如果返回的值是0,表示已经读到文件的结束了.
+小于0表示出现了错误.如果错误为EINTR说明读是由中断引起的, 如果是ECONNREST表示网络连接出了问题.
+
+写函数write  
+ssize_t write(int fd,const void *buf,size_t nbytes) 
+ 返回值：写入文件的字节数（成功）；-1（出错）
+write函数将buf中的nbytes字节内容写入文件描述符fd.成功时返回写的字节数.失败时返回-1. 并设置errno变量. 在网络程序中,当我们向套接字文件描述符写时有俩种可能.  
+1)write的返回值大于0,表示写了部分或者是全部的数据.  
+2)返回的值小于0,此时出现了错误.我们要根据错误类型来处理.  如果错误为EINTR表示在写的时候出现了中断错误.  
+如果为EPIPE表示网络连接出现了问题(对方已经关闭了连接).
+
+
+
+======================1-4过程中遇到的问题及解决=============
+1.图形界面的时候，没有那个curses.h文件怎么办，安装libncurses5-dev包就可以了。。
+
+2.编译的时候，如果没有加入选项-lcurses就会出错。正确的参数是：
+  gcc -lcurses -o 1 1.c
+开始的时候，是用-lcurse，所以出错了。
+其次，－o选项的后面，如果放在－lcurses前面，也是会出错的。
+
+3
+
+
+======================编译内核的过程===================
+
+1.cd /usr/src/linux/include/asm-generic/
+2. vim unistd.h,添加#define __NR_mysyscall  337
+3.cd /usr/src/linux/arch/x86/kernel/
+4. vim syscall_table_32.S 添加.long sys_mysyscall
+5.cd /usr/src/linux/kernel
+6.vim sys.c 添加函数
+asmlinkage int sys_mysyscall(void)
+{
+    printk( "hello, world" );
+    return 10;
+}
+
+7.编译，并且启用新内核
+8.编写代码
+#include <linux/unistd.h>
+#include <sys/syscall.h>
+
+#define __NR_mysyscall  337
+
+int main(int argc, char** argv)
+{
+    syscall(__NR_mysyscall );
+    return 0;
+}
+
+============================================================
+步骤_1   添加源代码
+编写添加到内核中的源程序，函数名以sys_开头。
+
+如：mycall(int num)，在/usr/src/linux/kernel/sys.c文件中添加如下代码：
+ asmlinkage int sys_mycall(int number)
+  {
+         return number;   //该系统调用仅返回一个整型值
+  }
+
+步骤_2   连接新的系统调用 
+        使内核的其余部分知道该系统调用的存在。为此，需编辑两个文件：
+/usr/src/linux/include/asm-i386/unistd.h——系统调用清单(为每个系统调
+用分配唯一号码)
+                ＃define _NR_name nnn   
+                 这里，name：系统调用名；nnn：系统调用对应的号码，不能与内核
+自身的系统调用号相同。
+
+/usr/src/linux/arch/i386/kernel/entry.S——对sys_call_table[ ]进行初始化
+(增加新的内核函数的指针)
+      .long SYMBOL_NAME(sys_mycall)
+
+
+步骤_3   重建Linux内核
+
+以root身份进入/usr/src/linux目录，重建内核
+ #make config       //基于文本的传统配置界面
+ #make dep     //检验内核源代码文件的依赖性和完整性
+ #make clean    //清除以前编译的目标文件
+ #make bzImage //编译内核，也可采用make zImage
+
+编译生成的内核文件为
+  /usr/src/linux/arch/i386/boot/bzImage 
+
+
+配置内核的方式
+	make config              基于文本的传统配置界面
+	make menuconfig    基于文本的菜单形式配置界面，字符终端下使用
+	make xconfig            基于图形窗口模式的配置界面，Xwindow下使
+用
+	
+对每个配置选项，有三种选择：
+	“Y”——将该功能编译进内核
+	“N”——不将该功能编译进内核
+	“M”——将该功能编译成可动态载入的内核模块
+
+步骤_4   重启内核
+将/usr/src/linux/arch/i386/boot/bzImage拷贝到/boot/bzImage 
+配置启动文件
+ 若采用lilo，修改/etc/lilo.conf，添加新的引导内核
+image=/boot/bzImage       // 上面编译生成的内核映象
+label=Linuxtest                 // 给该系统取个名字
+root=/dev/hda5                 // 根目录所在的分区，可用命令df查看
+read-only
+ 若采用grub，修改/etc/grub.conf，添加新的引导内核
+title Linuxtest
+root(hd0,4)
+kernel /boot/bzImage ro root=/dev/hda5
+initrd /boot/initrd-2.4.18-3.img
+重启后，出现Linuxtest选项，选择它进入新的内核 
+
+步骤_5   使用新的系统调用
+
+#include<stdio.h>
+#include</usr/src/linux-2.4/
+           include/asm/unistd.h>
+#include<errno.h>
+_syscall1(int, mycall, int, ret)
+
+int main(int argv, char *argc[])
+{   int a = mycall(100);
+    printf(“%d\n”,a);
+    return 0;
+}  
+
+
+

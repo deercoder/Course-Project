@@ -1,0 +1,101 @@
+创建一个设备之后，可以在/proc/devices文件中找到相应的。
+其中，character表示的就是字符设备。
+而block就是块设备。
+
+通过这个可以检测到程序是否正确。。
+
+=======================================================================
+添加设备驱动程序的方法
+编写设备驱动程序mydev.c
+    在模块的初始化init_module()中调用设备注册函数；
+    在模块的卸载cleanup_module()中调用设备的卸载函数。 
+设备驱动模块的编译
+    gcc -O2 -DMODULE -D__KERNEL__ 
+               -I/usr/src/linux-2.4.20-8/include -c mydev.c
+加载设备驱动模块: insmod –f mydev.o 
+    若加载成功，在文件/proc/devices中能看到新增加的设备，包括设备名mydev和主设备号。
+生成设备文件
+       mknod /dev/test c 254 0  (这个应该是对应的，就是254和前面建立的模块是对应的。将我们生成的那个模块映射为一个文件的。)    
+       //其中，test为设备文件名，254为主设备号，0为从设备号，c表示字符设备  
+
+========================================================================
+前面说明了如何创建一个模块，下面来说说模块的实际工作吧。
+上代码：
+#include "/usr/src/linux-2.6.31.12/include/linux/kernel.h"
+#include "/usr/src/linux-2.6.31.12/include/linux/module.h"
+#include "/usr/src/linux-2.6.31.12/include/linux/fs.h"
+#include "/usr/src/linux-2.6.31.12/include/linux/init.h"
+#include "/usr/src/linux-2.6.31.12/include/linux/errno.h"
+#include "/usr/src/linux-2.6.31.12/include/linux/errno.h"
+#include "/usr/src/linux-2.6.31.12/include/linux/types.h"
+#include "/usr/src/linux-2.6.31.12/include/linux/errno.h"
+#include "/usr/src/linux-2.6.31.12/include/linux/uaccess.h"
+
+
+#if CONFIG_MODVERSIONS == 1
+#define MODVERSIONS
+#include "/usr/src/linux-2.6.31.12/include/linux/version.h"
+#endif
+
+#define DEVICE_NUM 0	//当用设备号为0创建时，表示随机产生一个可以用的设备号创建模块
+
+static int my_open(struct inode *inode, struct file *file);
+static int my_release(struct inode *inode, struct file *file);
+static ssize_t my_read(struct file *file, char __user *user, size_t t, loff_t *f);
+static ssize_t my_write(struct file *file, const char __user *user, size_t t, loff_t *f);
+static int device_num = 0;	//用来保存模块创建成功的时候真正的设备号
+
+struct file_operations test_fops=
+{
+   open:my_open,
+   release:my_release,
+   read:my_read,
+   write:my_write,
+};
+
+int init_module()
+{
+  int ret = register_chrdev(DEVICE_NUM,"mytest",&test_fops);//向系统的字符登记表登记一个字符设备
+  if( ret < 0){
+	printk("register failure!\n");
+ 	return -1;
+  }
+  else{
+  	printk("register success!\n");
+	device_num = ret;
+  	return 0;
+    }
+}
+
+void cleanup_module()
+{
+  unregister_chrdev(device_num,"mytest");
+  printk("I will unregister the device!\n");
+}
+
+static int my_open(struct inode *inode, struct file *file)
+{
+  return 0;
+}
+
+static int my_release(struct inode *inode, struct file *file)
+{
+  return 0;
+}
+
+static ssize_t my_read(struct file *file, char __user *user, size_t t, loff_t *f)
+{
+    return 0;
+}
+
+static ssize_t my_write(struct file *file, const char __user *user, size_t t, loff_t *f)
+{
+  return 0;
+}
+
+实际工作就是要在init_module和cleanup_module两个函数中，分别添加一个是添加模块，一个是删除模块。
+对应的，有了一个模块，就可以使用设备，然后，把设备文件话，就可以实现了驱动。
+
+这里，编译后，利用insmod ./mytest.ko命令，就可以添加一个模块，此时，lsmod显示是有这个名为mytest的模块（创建名称和号见函数），然后删除后rmmod ./mytest.ko ,再看lsmod发现没有。
+不过前面发现一个问题，就是添加后,/proc/devices文件中的character中有，可是删除后发现没有删除，也就是这个文件没有相应的改变。后来发现问题了，创建的时候用的是0号设备，而这个创建的设备号是随机的，通过返回值来得到，而我删除的时候还是用0，这样就不是删除对应的那个添加的模块，增加一个全局变量后就OK了，既得到了设备号，也实现了正确的删除，再次观察就发现没有问题。 
+而那些结构体，就是一个初始化，对应的函数，需要自己来具体实现了（待续......）
