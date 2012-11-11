@@ -1,0 +1,6 @@
+1.首先将Var.bat拷贝到masm32的安装目录bin下，默认是在D盘。
+   否则就要修改Var.bat中的路径名称。
+2.然后运行cmd，进入命令行，输入命令，并进入bin的目录下，运行Var.bat，设置环境变量。
+3.编译命令是	ml /c /coff  xx.asm
+   连接命令是	link /subsystem:windows xx.obj xx.res
+4.运行生成的文件。

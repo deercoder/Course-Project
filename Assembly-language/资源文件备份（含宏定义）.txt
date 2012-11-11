@@ -1,0 +1,246 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Chinese (P.R.C.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
+#ifdef _WIN32
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
+#pragma code_page(936)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+//////////////////////////////////////////////////////////////////////////////
+#define        ICO_MAIN	    1000
+#define        IDD_DIALOG1           101
+#define        IDD_DIALOG2           102
+#define        IDD_DIALOG3           103  
+#define        IDR_MENU1              102
+#define        IDC_EDIT1                1000
+#define        IDC_EDIT2        	    1002
+#define        IDC_BACKSPACE 	    1003
+#define        IDC_CE                     1004
+#define        IDC_C                	    1005
+#define        IDC_MC                     1006
+#define        IDC_MR		    1007
+#define        IDC_MS		    1008
+#define        IDC_M                       1009          // "M+"
+#define        IDC_7                        1010
+#define        IDC_8                        1011
+#define        IDC_9                        1012        // "9"
+#define        IDC_chu                    1013
+#define        IDC_sqrt                    1014
+#define        IDC_4   		     1015
+#define        IDC_5  		    1016
+#define        IDC_6  	                    1017
+#define        IDC_cheng  	    1018
+#define        IDC_mod  	    1019
+#define        IDC_1  	                    1020
+#define        IDC_2  	                    1021
+#define        IDC_3  	                    1022
+#define        IDC_jian  	1023
+#define        IDC_daoshu  	1024
+#define        IDC_0  	                1030
+#define        IDC_jiajian  	1031
+#define        IDC_dian  	1032
+#define        IDC_jia  	1033
+#define        IDC_equ  	1034
+#define        ID_MENUCOPY           40001
+#define        ID_MENUPASTE          40002
+
+
+
+#define        ID_MENUSTANDARD        40003
+#define        ID_MENUSCIENCE           40004
+#define        ID_MENUDEVIDE             40005
+
+
+
+#define        ID_MENUHELP             40006
+#define        ID_MENUABOUT         40007
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+ICO_MAIN                ICON    DISCARDABLE     "Main.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOG1 DIALOG DISCARDABLE  0, 0, 188, 165
+STYLE DS_MODALFRAME | WS_MINIMIZEBOX | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "计算器"
+MENU IDR_MENU1
+FONT 10, "System"
+BEGIN
+    EDITTEXT        IDC_EDIT1,14,14,157,14,ES_RIGHT | ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT2,7,35,27,18,ES_CENTER | ES_AUTOHSCROLL | 
+                    ES_READONLY
+    PUSHBUTTON      "BACKSPACE",IDC_BACKSPACE,39,35,50,17
+    PUSHBUTTON      "CE",IDC_CE,97,35,32,17
+    PUSHBUTTON      "C",IDC_C,140,35,32,17
+    PUSHBUTTON      "MC",IDC_MC,7,62,26,19
+    PUSHBUTTON      "MR",IDC_MR,7,86,26,19
+    PUSHBUTTON      "MS",IDC_MS,7,112,26,19
+    PUSHBUTTON      "M+",IDC_M,7,139,26,19
+    PUSHBUTTON      "7",IDC_7,36,62,26,19
+    PUSHBUTTON      "8",IDC_8,65,62,26,19
+    PUSHBUTTON      "9",IDC_BUTTON6,94,62,26,19
+    PUSHBUTTON      "/",IDC_chu,123,62,26,19
+    PUSHBUTTON      "sqrt",IDC_sqrt,152,62,26,19
+    PUSHBUTTON      "4",IDC_4,36,86,26,19
+    PUSHBUTTON      "5",IDC_5,65,86,26,19
+    PUSHBUTTON      "6",IDC_6,94,86,26,19
+    PUSHBUTTON      "*",IDC_cheng,123,86,26,19
+    PUSHBUTTON      "%",IDC_mod,152,86,26,19
+    PUSHBUTTON      "1",IDC_1,36,112,26,19
+    PUSHBUTTON      "2",IDC_2,65,112,26,19
+    PUSHBUTTON      "3",IDC_3,94,112,26,19
+    PUSHBUTTON      "--",IDC_jian,123,112,26,19
+    PUSHBUTTON      "1/x",IDC_daoshu,152,112,26,19
+    PUSHBUTTON      "0",IDC_0,36,139,26,19
+    PUSHBUTTON      "+/-",IDC_jiajian,65,139,26,19
+    PUSHBUTTON      ".",IDC_dian,94,139,26,19
+    PUSHBUTTON      "+",IDC_jia,123,139,26,19
+    PUSHBUTTON      "=",IDC_equ,152,139,26,19
+END
+
+IDD_DIALOG2 DIALOG DISCARDABLE  0, 0, 187, 98
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About"
+FONT 10, "System"
+BEGIN
+    CTEXT           "汇编语言大型课程设计\n\n 华中科技大学\n\n 2009年8月\n\n  本程序由刘畅开发\n ",
+                    IDC_STATIC,21,18,140,58,SS_NOTIFY
+END
+
+IDD_DIALOG3 DIALOG DISCARDABLE  0, 0, 190, 178
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 10, "System"
+BEGIN
+    CTEXT           "汇编语言大型课程设计\n \t\t-------计算器的使用说明",
+                    IDC_STATIC,17,13,155,24
+    LTEXT           "本计算器仿照windows自带的计算器，功能基本相同，操作简单，能够实现简单的四则运算，支持数据的连续运算，以下是一些特殊的用法，提供给用户参考！\n\n若要存储显示的数字，请单击""MS""\n若要重调用存储的数字，请单击""MR""\n若要清除内存，请单击""MC""\n若要将显示的数字与内存中已有的数字相加，请单击""M+"" ",
+                    IDC_STATIC,7,41,176,85
+    CTEXT           "欢迎使用，如果有什么好的意见，欢迎联系我！\nQQ:335284643\n 邮箱:lllccc2007@yahoo.com.cn",
+                    IDC_STATIC,7,139,176,32
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_DIALOG1, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 181
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 158
+    END
+
+    IDD_DIALOG2, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 180
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 91
+    END
+
+    IDD_DIALOG3, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 183
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 171
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MENU1 MENU DISCARDABLE 
+BEGIN
+    POPUP "编辑(E)"
+    BEGIN
+        MENUITEM "复制(C) Ctrl+C ",             ID_MENUCOPY
+        MENUITEM "粘贴(P) Ctrl+V",              ID_MENUPASTE
+    END
+    POPUP "查看(V)"
+    BEGIN
+        MENUITEM "标准型(T)",                   ID_MENUSTANDARD
+        MENUITEM "科学型(S)",                   ID_MENUSCIENCE
+        MENUITEM "数字分组(I)",                 ID_MENUDEVIDE
+    END
+    POPUP "帮助(H)"
+    BEGIN
+        MENUITEM "帮助主题(H)",                 ID_MENUHELP
+        MENUITEM "关于计算器(A)",               ID_MENUABOUT
+    END
+END
+
+#endif    // Chinese (P.R.C.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
