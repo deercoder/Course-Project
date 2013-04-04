@@ -1,0 +1,19 @@
+BIF算法MEX工程：
+本工程文件是利用MATLAB提供的C++接口，采用VC++ 6.0编程生成能够在MATLAB下面调用的动态链接库，用于在MATALB下面调用。
+
+
+BIF算法VC工程：
+本工程用于在VC++直接调用动态链接库，将算法彻底从MATLAB平台移植到C++平台，直接在VC++下面进行调用该动态链接算法的库。
+
+BIF算法的MATLAB工程：
+实现BIF算法的MATLAB代码，纯粹使用MATLAB编写。
+
+
+BIF_Scale16_neat.dll: MEX工程，直接在MATLAB下面调用。
+
+BIF_VC.dll: VC工程文件，可以在VC下面直接调用。比如创建一个类BIF，调用类成员函数BifTransform等等。
+
+
+
+
+

@@ -1,0 +1,13 @@
+*.c
+*.h
+*.cpp
+*.dsw
+*.dsp
+*.aps
+*.ncb
+*.opt
+*.plg
+*.sbr
+*.pch
+*.obj
+*.idb

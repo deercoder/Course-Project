@@ -1,0 +1,8 @@
+; mexGaborExtraction.def : Declares the module parameters for the DLL.
+
+LIBRARY      "mexGaborExtraction"
+DESCRIPTION  'mexGaborExtraction Windows Dynamic Link Library'
+
+EXPORTS
+    ; Explicit exports can go here
+	mexFunction
